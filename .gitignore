@@ -1,0 +1,22 @@
+# Ignore Visual Studio user and build files
+.vs/
+out/
+build/
+*.exe
+*.obj
+*.pdb
+*.log
+*.cache
+*.vcxproj*
+*.sln
+*.user
+*.aps
+*.ncb
+*.opendb
+*.tlog
+*.idb
+*.ilk
+*.ipch
+*.db
+*.vcxproj.filters
+*.VC.db
