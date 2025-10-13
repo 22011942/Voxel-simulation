@@ -105,8 +105,14 @@ void Chunk::generateOffsets(const int xLimit, const int zLimit, const int LOD, s
 		std::vector<glm::vec3> offsets;
 		offsets.reserve(CHUNK_SIZE * CHUNK_SIZE);
 
-		for (int x = xLimit; x < xLimit + CHUNK_SIZE; x += gridLOD) {
-			for (int z = zLimit; z < zLimit + CHUNK_SIZE; z+= gridLOD) {
+		int bleed = 0;
+
+		if (LOD == 0) {
+			bleed = 100;
+		}
+
+		for (int x = xLimit - bleed; x < xLimit + CHUNK_SIZE + bleed; x += gridLOD) {
+			for (int z = zLimit - bleed; z < zLimit + CHUNK_SIZE + bleed; z+= gridLOD) {
 				int yval = noise.fractalBrownianMotion(x * 0.05f, z * 0.05f, OCTAVES);
 
 				if (SINK_CULLING) {

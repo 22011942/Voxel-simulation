@@ -74,7 +74,6 @@ int main()
 	ImGui_ImplOpenGL3_Init("#version 330");
 
 	SDL_GL_SetSwapInterval(1); 
-	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
@@ -128,35 +127,9 @@ int main()
 			}
 		}
 
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL3_NewFrame();
-		ImGui::NewFrame();
-
-		drawGUI(camera, perlin, lightPos, lightColor);
-
-		ImGui::Render();
-
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		
-		const bool* keyState = SDL_GetKeyboardState(NULL);
-
-		if (keyState[SDL_SCANCODE_W]) {
-			camera.processKeyboard(FORWARD, deltaTime);
-		}
-		if (keyState[SDL_SCANCODE_S]) {
-			camera.processKeyboard(BACKWARD, deltaTime);
-		}
-		if (keyState[SDL_SCANCODE_A]) {
-			camera.processKeyboard(LEFT, deltaTime);
-		}
-		if (keyState[SDL_SCANCODE_D]) {
-			camera.processKeyboard(RIGHT, deltaTime);
-		}
-		
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 1000000.0f);
 
@@ -175,7 +148,7 @@ int main()
 		shaderProgram.setUniform("baseSinkStrength", baseSinkStrength);
 		shaderProgram.setUniform("fadePow", fadePow);
 
-		
+
 		texture.bindTexture();
 		shaderProgram.setUniform("ourTexture", 0);
 
@@ -184,6 +157,36 @@ int main()
 		overworld.generateChunks(camera.Position, perlin);
 
 		overworld.drawChunks(shaderProgram);
+
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL3_NewFrame();
+		ImGui::NewFrame();
+
+		drawGUI(camera, perlin, lightPos, lightColor);
+
+		ImGui::Render();
+
+
+		glDisable(GL_DEPTH_TEST);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glEnable(GL_DEPTH_TEST);
+
+		
+		const bool* keyState = SDL_GetKeyboardState(NULL);
+
+		if (keyState[SDL_SCANCODE_W]) {
+			camera.processKeyboard(FORWARD, deltaTime);
+		}
+		if (keyState[SDL_SCANCODE_S]) {
+			camera.processKeyboard(BACKWARD, deltaTime);
+		}
+		if (keyState[SDL_SCANCODE_A]) {
+			camera.processKeyboard(LEFT, deltaTime);
+		}
+		if (keyState[SDL_SCANCODE_D]) {
+			camera.processKeyboard(RIGHT, deltaTime);
+		}
 
 		// logic here
 
@@ -235,7 +238,6 @@ void drawGUI(Camera& camera, Perlin& perlin, glm::vec3& lightPos, glm::vec3& lig
 	ImGui::SliderFloat("EndDist Add", &endDistAdd, 0.0f, 1000.0f);
 	ImGui::SliderFloat("Base Sink", &baseSinkStrength, 0.0f, 20.0f);
 	ImGui::SliderFloat("Fade Power", &fadePow, 0.1f, 5.0f);
-	ImGui::SliderFloat("LOD Debug", &lodScaleDebug, 1.0f, 16.0f);
 
 	ImGui::End();
 }
