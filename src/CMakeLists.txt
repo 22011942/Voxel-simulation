@@ -18,7 +18,7 @@ add_executable (CMakeTarget
     ${CMAKE_SOURCE_DIR}/include/imgui-master/imgui_widgets.cpp
     ${CMAKE_SOURCE_DIR}/include/imgui-master/backends/imgui_impl_sdl3.cpp
     ${CMAKE_SOURCE_DIR}/include/imgui-master/backends/imgui_impl_opengl3.cpp
-)
+  "ThreadPool.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CMakeTarget PROPERTY CXX_STANDARD 20)

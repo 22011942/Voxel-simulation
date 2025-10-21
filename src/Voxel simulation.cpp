@@ -100,6 +100,12 @@ int main()
 	glm::vec3 lightPos = glm::vec3(0, 150, 10);
 	glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
+	double number = 0;
+
+	std::vector<bool> LODReady;
+
+	LODReady.assign(5, false);
+
 	while (!done) {
 		lastTick = currentTick;
 		currentTick = SDL_GetTicks();
@@ -154,9 +160,28 @@ int main()
 
 		shaderProgram.activate();
 
-		overworld.generateChunks(camera.Position, perlin);
 
-		overworld.drawChunks(shaderProgram);
+		for (int lod = 0; lod < 5; lod++) {
+			overworld.generateChunks(camera.Position, perlin, lod, LODReady);
+
+
+			if (overworld.generationDone[lod]) {
+				overworld.allocateMeshData(lod);
+				overworld.clearTempChunk(lod);
+				overworld.prevChunksAssign(lod);
+
+				LODReady[lod] = true;
+
+				overworld.generationDone[lod] = false; // reset for next time
+			}
+
+
+		}
+
+		for (int lod = 0; lod < 5; lod++) {
+			if (LODReady[lod])
+				overworld.drawChunks(shaderProgram, lod);
+		}
 
 
 		ImGui_ImplOpenGL3_NewFrame();

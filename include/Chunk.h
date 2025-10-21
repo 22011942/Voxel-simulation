@@ -12,7 +12,8 @@
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_opengl3.h"
 #include <unordered_set>
-#include <thread>
+#include <ThreadPool.h>
+
 
 const int CHUNK_SIZE = 500;
 const int OCTAVES = 8;
@@ -56,13 +57,6 @@ private:
 	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD3;
 	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD4;
 
-	
-	//std::unordered_map<glm::ivec2, Mesh> chunks_Mesh_LOD0;
-	//std::unordered_map<glm::ivec2, Mesh> chunks_Mesh_LOD1;
-	//std::unordered_map<glm::ivec2, Mesh> chunks_Mesh_LOD2;
-	//std::unordered_map<glm::ivec2, Mesh> chunks_Mesh_LOD3;
-	//std::unordered_map<glm::ivec2, Mesh> chunks_Mesh_LOD4;
-
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD0;
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD1;
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD2;
@@ -91,25 +85,43 @@ private:
 
 	void generateSurroundingChunks(const glm::ivec2& playerChunk, int LOD, glm::vec2& playerPos, Perlin& noise);
 
-	std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& returnLODChunk(const int LOD);
+	std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& returnTempChunk(const int LOD);
 
-	glm::ivec2 prevPos = glm::ivec2(1,0);
+	glm::ivec2 prevPos[5] = {
+		glm::ivec2(10, 10),
+		glm::ivec2(10, 10),
+		glm::ivec2(10, 10),
+		glm::ivec2(10, 10),
+		glm::ivec2(10, 10)
+	};
 
-	void checkChunkDifference();
-
-	void allocateMeshData();
+	void checkChunkDifference(const int LOD);
 
 	bool firstIteration = true;
 
-	void deleteMeshData();
+	void deleteMeshData(const int LOD);
+
+	std::unordered_set<glm::ivec2>& returnPrevChunk(const int LOD);
+
+	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>>& returnMeshChunks(const int LOD);
+
+	int returnLODScale(const int LOD);
 public:
 	Chunk();
 
-	void generateChunks(const glm::vec3& playerPos, Perlin& noise);
+	std::atomic<bool> generationDone[5];
+
+	void allocateMeshData(const int LOD);
+
+	void clearTempChunk(const int LOD);
+
+	void prevChunksAssign(const int LOD);
+
+	void generateChunks(const glm::vec3& playerPos, Perlin& noise, const int LOD, std::vector<bool>& LODReady);
 
 	std::unordered_set<glm::ivec2>& returnChunkCoords(const int LOD);
 
-	void drawChunks(Shader& shaderProgram);
+	void drawChunks(Shader& shaderProgram, const int LOD);
 
 	~Chunk();
 };
