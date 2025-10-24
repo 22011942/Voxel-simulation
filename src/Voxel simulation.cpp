@@ -13,12 +13,6 @@ constexpr GLsizei BYTES_PER_VERTEX = 6;
 
 void drawGUI(Camera& camera, Perlin& perlin, glm::vec3& lightPos, glm::vec3& lightCol);
 
-static float startDistMultiplier = 0.5f;
-static float endDistAdd = 300.0f;
-static float baseSinkStrength = 8.0f;
-static float fadePow = 1.0f;
-static float lodScaleDebug = 4.0f;
-
 int main()
 {   
 	SDL_Window* window;
@@ -102,10 +96,6 @@ int main()
 
 	double number = 0;
 
-	std::vector<bool> LODReady;
-
-	LODReady.assign(5, false);
-
 	while (!done) {
 		lastTick = currentTick;
 		currentTick = SDL_GetTicks();
@@ -162,25 +152,29 @@ int main()
 
 
 		for (int lod = 0; lod < 5; lod++) {
-			overworld.generateChunks(camera.Position, perlin, lod, LODReady);
+			overworld.generateChunks(camera.Position, perlin, lod);
 
 
 			if (overworld.generationDone[lod]) {
+
+				//overworld.LODReady[lod].store(false);
 				overworld.allocateMeshData(lod);
+
 				overworld.clearTempChunk(lod);
 				overworld.prevChunksAssign(lod);
 
-				LODReady[lod] = true;
-
-				overworld.generationDone[lod] = false; // reset for next time
+				//overworld.LODReady[lod].store(true);
+				overworld.generationDone[lod].store(false); // reset for next time
 			}
 
 
 		}
 
 		for (int lod = 0; lod < 5; lod++) {
-			if (LODReady[lod])
-				overworld.drawChunks(shaderProgram, lod);
+			//if (overworld.LODReady[lod]) {
+				//std::cout << " Drawing lod chunk: " << lod << std::endl;
+			overworld.drawChunks(shaderProgram, lod);
+			//}
 		}
 
 

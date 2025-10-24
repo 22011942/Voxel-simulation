@@ -14,11 +14,16 @@
 #include <unordered_set>
 #include <ThreadPool.h>
 
+static float startDistMultiplier = 0.5f;
+static float endDistAdd = 300.0f;
+static float baseSinkStrength = 8.0f;
+static float fadePow = 1.0f;
+static float lodScaleDebug = 4.0f;
 
 const int CHUNK_SIZE = 500;
 const int OCTAVES = 8;
 const double PI = std::numbers::pi;
-const bool SINK_CULLING = false;
+const bool SINK_CULLING = true;
 
 struct IVec2Hash {
 	size_t operator()(const glm::ivec2& v) const {
@@ -109,6 +114,8 @@ private:
 public:
 	Chunk();
 
+	std::atomic<bool> LODReady[5];
+
 	std::atomic<bool> generationDone[5];
 
 	void allocateMeshData(const int LOD);
@@ -117,7 +124,7 @@ public:
 
 	void prevChunksAssign(const int LOD);
 
-	void generateChunks(const glm::vec3& playerPos, Perlin& noise, const int LOD, std::vector<bool>& LODReady);
+	void generateChunks(const glm::vec3& playerPos, Perlin& noise, const int LOD);
 
 	std::unordered_set<glm::ivec2>& returnChunkCoords(const int LOD);
 

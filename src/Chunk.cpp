@@ -3,6 +3,7 @@
 
 ThreadPool chunkPool(5);
 
+
 std::vector<GLfloat> Chunk::vertices = {
 	// positions                    // front face
 	-0.5f, -0.5f,  0.5f,     // bottom left
@@ -98,8 +99,11 @@ GLushort Chunk::encodeAngle(float radians) {
 }
 
 Chunk::Chunk() : chunk_Coord_LOD0{ glm::ivec2(0, 0) }, prev_chunk_Coord_LOD0{ glm::ivec2(0, 0) } {
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 5; ++i) {
 		generationDone[i] = false;
+		LODReady[i] = false;
+	}
+		
 }
 
 void Chunk::generateOffsets(const int xLimit, const int zLimit, const int LOD, std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& chunks, glm::vec2& playerPos, Perlin& noise) {
@@ -125,17 +129,17 @@ void Chunk::generateOffsets(const int xLimit, const int zLimit, const int LOD, s
 
 						float distance = glm::length(blockPosition - playerPos);
 
-						float startDist = CHUNK_SIZE * (LOD * 0.5);
-						float endDist = startDist + 300.0 * LOD;
+						float startDist = startDistMultiplier * LOD;
+						float endDist = startDist + endDistAdd * LOD;
 
-						float t = std::clamp((distance - startDist) / (endDist - startDist), 0.0f, 1.0f);
-						float fade = 1.0 - glm::smoothstep(0.0f, 1.0f, t);
+						float t = std::clamp((distance - startDist) / std::max(1.0f, endDist - startDist), 0.0f, 1.0f);
+						float fade = std::pow(1.0f - glm::smoothstep(0.0f, 1.0f, t), fadePow);
 
-						float sinkStrength = 8.0 * log2(LOD + 1.0);
+						float sinkStrength = baseSinkStrength * log2(LOD + 1.0);
 
 						float sinkDepth = fade * sinkStrength;
 
-						if (sinkDepth < 13) {
+						if (sinkDepth < 1) {
 							offsets.emplace_back(x, yval, z);
 						}
 					}
@@ -153,16 +157,14 @@ void Chunk::generateOffsets(const int xLimit, const int zLimit, const int LOD, s
 	}
 }
 
-void Chunk::generateChunks(const glm::vec3& playerPos, Perlin& noise, const int LOD, std::vector<bool>& LODReady) {
+void Chunk::generateChunks(const glm::vec3& playerPos, Perlin& noise, const int LOD) {
 	glm::ivec2 playerChunk = glm::floor(glm::vec2(playerPos.x, playerPos.z) / (float)CHUNK_SIZE);
 	glm::vec2 playerPosition = glm::fvec2(playerPos.x, playerPos.z);
 
 
-	if (prevPos[LOD] != playerChunk) { // causes it to only generate the first
+	if (prevPos[LOD] != playerChunk) { 
 
-		LODReady[LOD] = false;
-
-		if (!firstIteration) 
+		if (!firstIteration)
 			checkChunkDifference(LOD);
 		
 
@@ -170,13 +172,10 @@ void Chunk::generateChunks(const glm::vec3& playerPos, Perlin& noise, const int 
 
 		auto future = chunkPool.enqueue([=, this]() mutable {
 			generateSurroundingChunks(playerChunk, LOD, playerPosition, noise);
-			generationDone[LOD] = true; // mark as finished
+			generationDone[LOD].store(true); // mark as finished
 		});
 
 		//allocateMeshData(LOD);
-
-		//clearTempChunk(LOD);
-		//prevChunksAssign(LOD);
 
 		prevPos[LOD] = playerChunk;
 		firstIteration = false;
@@ -204,6 +203,7 @@ void Chunk::generateSurroundingChunks(const glm::ivec2& playerChunk, const int L
 		for (size_t i = 0; i < gridSize; i++) {
 			for (size_t j = 0; j < gridSize; j++) {
 				generateOffsets((playerChunk.x + startX) * CHUNK_SIZE, (playerChunk.y + startZ) * CHUNK_SIZE, LOD, returnTempChunk(LOD), playerPos, noise);
+				//std::cout << "Data created for lod " << LOD << " Coord: " << playerChunk.x + startX << " " << playerChunk.y + startZ << std::endl;
 				coordsVector.insert(glm::ivec2(playerChunk.x + startX, playerChunk.y + startZ));
 				startZ++;
 			}
@@ -300,12 +300,23 @@ void Chunk::drawChunks(Shader& shaderProgram, const int LOD) {
 	shaderProgram.setUniform("lodScale", returnLODScale(LOD));
 
 	if (LOD == 0) {
-		chunks_Mesh_LOD0[chunk_Coord_LOD0]->Draw(indices);
+		if (chunks_Mesh_LOD0.find(chunk_Coord_LOD0) == chunks_Mesh_LOD0.end()) {
+			//std::cout << "Data missing on LOD 0  Coord: " << chunk_Coord_LOD0.x << " " << chunk_Coord_LOD0.y << std::endl;
+		}
+		else {
+			chunks_Mesh_LOD0[chunk_Coord_LOD0]->Draw(indices);
+		}
+		
 	}
 	else {
 		for (const auto& coord : returnChunkCoords(LOD)) {
+			if (returnMeshChunks(LOD).find(coord) == returnMeshChunks(LOD).end()) {
+				//std::cout << "Data missing on LOD "<< LOD << "  Coord: " << coord.x << " " << coord.y << std::endl;
+			}
+			else {
+				returnMeshChunks(LOD)[coord]->Draw(indices);
+			}
 
-			returnMeshChunks(LOD)[coord]->Draw(indices);
 		}
 	}
 }
@@ -325,11 +336,13 @@ void Chunk::deleteMeshData(const int LOD){
 void Chunk::checkChunkDifference(const int LOD) {
 
 	if (LOD == 0) {
+		//std::cout << "lod 0 coord erased: " << prev_chunk_Coord_LOD0.x << " " << prev_chunk_Coord_LOD0.y << std::endl;
 		chunks_Mesh_LOD0.erase(prev_chunk_Coord_LOD0);
 	}
 	else {
 		for (const auto& coord : returnPrevChunk(LOD)) {
 			if (returnChunkCoords(LOD).find(coord) == returnChunkCoords(LOD).end()) {
+				//std::cout << "lod "  << LOD << " coord erased: " << coord.x << " " << coord.y << std::endl;
 				returnMeshChunks(LOD).erase(coord);
 			}
 		}
@@ -337,13 +350,19 @@ void Chunk::checkChunkDifference(const int LOD) {
 }
 
 void Chunk::allocateMeshData(const int LOD) {
+	//std::cout << "Mesh data allocating... on lod: " << LOD << std::endl;
 
 	for (const auto& coord : returnTempChunk(LOD)) {
 		if (returnMeshChunks(LOD).find(coord.first) == returnMeshChunks(LOD).end()) {
 			returnMeshChunks(LOD)[coord.first] = std::make_unique<Mesh>(vertices, indices, pitchYaw, coord.second);
+			//std::cout << "mesh data allocated for coord: " << coord.first.x << " " << coord.first.y << std::endl;
+		}
+		else {
+			//std::cout << "mesh data already exists for coord: " << coord.first.x << " " << coord.first.y << std::endl;
 		}
 	}
 
+	//std::cout << "Mesh data finished allocating... on lod: "<< LOD << std::endl;
 }
 
 void Chunk::clearTempChunk(const int LOD) {
