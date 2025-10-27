@@ -225,6 +225,12 @@ std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& Chunk::returnTempChunk(c
 		return temp_chunks_Mesh_LOD3;
 	case LOWEST_DETAIL:
 		return temp_chunks_Mesh_LOD4;
+	case LOWEST_DETAIL_2:
+		return temp_chunks_Mesh_LOD5;
+	case LOWEST_DETAIL_3:
+		return temp_chunks_Mesh_LOD6;
+	case LOWEST_DETAIL_4:
+		return temp_chunks_Mesh_LOD7;
 	default:
 		break;
 	}
@@ -240,6 +246,12 @@ std::unordered_set<glm::ivec2>& Chunk::returnChunkCoords(const int LOD) {
 		return chunk_Coords_LOD3;
 	case LOWEST_DETAIL:
 		return chunk_Coords_LOD4;
+	case LOWEST_DETAIL_2:
+		return chunk_Coords_LOD5;
+	case LOWEST_DETAIL_3:
+		return chunk_Coords_LOD6;
+	case LOWEST_DETAIL_4:
+		return chunk_Coords_LOD7;
 	default:
 		break;
 	}
@@ -255,6 +267,12 @@ std::unordered_set<glm::ivec2>& Chunk::returnPrevChunk(const int LOD) {
 		return prev_chunk_Coords_LOD3;
 	case LOWEST_DETAIL:
 		return prev_chunk_Coords_LOD4;
+	case LOWEST_DETAIL_2:
+		return prev_chunk_Coords_LOD5;
+	case LOWEST_DETAIL_3:
+		return prev_chunk_Coords_LOD6;
+	case LOWEST_DETAIL_4:
+		return prev_chunk_Coords_LOD7;
 	default:
 		break;
 	}
@@ -272,6 +290,12 @@ std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>>& Chunk::returnMeshChunks(c
 		return chunks_Mesh_LOD3;
 	case LOWEST_DETAIL:
 		return chunks_Mesh_LOD4;
+	case LOWEST_DETAIL_2:
+		return chunks_Mesh_LOD5;
+	case LOWEST_DETAIL_3:
+		return chunks_Mesh_LOD6;
+	case LOWEST_DETAIL_4:
+		return chunks_Mesh_LOD7;
 	default:
 		break;
 	}
@@ -289,6 +313,12 @@ int Chunk::returnLODScale(const int LOD) {
 		return 8;
 	case LOWEST_DETAIL:
 		return 16;
+	case LOWEST_DETAIL_2:
+		return 32;
+	case LOWEST_DETAIL_3:
+		return 64;
+	case LOWEST_DETAIL_4:
+		return 128;
 	default:
 		break;
 	}
@@ -389,4 +419,8 @@ Chunk::~Chunk() {
 	deleteMeshData(LOW_DETAIL);
 	deleteMeshData(LOWER_DETAIL);
 	deleteMeshData(LOWEST_DETAIL);
+	deleteMeshData(LOWEST_DETAIL_2);
+	deleteMeshData(LOWEST_DETAIL_3);
+	deleteMeshData(LOWEST_DETAIL_4);
+
 }

@@ -73,7 +73,7 @@ int main()
 
 	// Shader stuff
 	
-	Shader shaderProgram("F:/Projects/Voxel simulation/include/shaders/default.vert", "F:/Projects/Voxel simulation/include/shaders/default.frag");
+	Shader shaderProgram("/run/media/michaelp/New Volume1/Projects/Voxel simulation/include/shaders/default.vert", "/run/media/michaelp/New Volume1/Projects/Voxel simulation/include/shaders/default.frag");
 
 	// shader end
 
@@ -87,7 +87,7 @@ int main()
 
 	//Perlin noise;
 
-	Texture texture("F:/Projects/Voxel simulation/include/Textures/ground.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture texture("/run/media/michaelp/New Volume1/Projects/Voxel simulation/include/Textures/ground.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
 
 	Chunk overworld;
 
@@ -151,7 +151,7 @@ int main()
 		shaderProgram.activate();
 
 
-		for (int lod = 0; lod < 5; lod++) {
+		for (int lod = 0; lod < 8; lod++) {
 			overworld.generateChunks(camera.Position, perlin, lod);
 
 
@@ -170,7 +170,7 @@ int main()
 
 		}
 
-		for (int lod = 0; lod < 5; lod++) {
+		for (int lod = 0; lod < 8; lod++) {
 			//if (overworld.LODReady[lod]) {
 				//std::cout << " Drawing lod chunk: " << lod << std::endl;
 			overworld.drawChunks(shaderProgram, lod);

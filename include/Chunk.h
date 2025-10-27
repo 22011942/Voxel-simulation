@@ -20,7 +20,7 @@ static float baseSinkStrength = 8.0f;
 static float fadePow = 1.0f;
 static float lodScaleDebug = 4.0f;
 
-const int CHUNK_SIZE = 500;
+const int CHUNK_SIZE = 512;
 const int OCTAVES = 8;
 const double PI = std::numbers::pi;
 const bool SINK_CULLING = true;
@@ -51,7 +51,10 @@ enum gridDetail {
 	MEDIUM_DETAIL,
 	LOW_DETAIL,
 	LOWER_DETAIL,
-	LOWEST_DETAIL
+	LOWEST_DETAIL,
+	LOWEST_DETAIL_2,
+	LOWEST_DETAIL_3,
+	LOWEST_DETAIL_4
 };
 
 class Chunk {
@@ -61,24 +64,38 @@ private:
 	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD2;
 	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD3;
 	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD4;
+	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD5;
+	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD6;
+	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>> chunks_Mesh_LOD7;
 
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD0;
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD1;
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD2;
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD3;
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD4;
+	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD5;
+	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD6;
+	std::unordered_map<glm::ivec2, std::vector<glm::vec3>> temp_chunks_Mesh_LOD7;
 
 	glm::ivec2 chunk_Coord_LOD0;
 	std::unordered_set<glm::ivec2> chunk_Coords_LOD1;
 	std::unordered_set<glm::ivec2> chunk_Coords_LOD2;
 	std::unordered_set<glm::ivec2> chunk_Coords_LOD3;
 	std::unordered_set<glm::ivec2> chunk_Coords_LOD4;
+	std::unordered_set<glm::ivec2> chunk_Coords_LOD5;
+	std::unordered_set<glm::ivec2> chunk_Coords_LOD6;
+	std::unordered_set<glm::ivec2> chunk_Coords_LOD7;
+
 
 	glm::ivec2 prev_chunk_Coord_LOD0;
 	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD1;
 	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD2;
 	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD3;
 	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD4;
+	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD5;
+	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD6;
+	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD7;
+
 
 
 	static std::vector<GLfloat> vertices;
@@ -92,7 +109,10 @@ private:
 
 	std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& returnTempChunk(const int LOD);
 
-	glm::ivec2 prevPos[5] = {
+	glm::ivec2 prevPos[8] = {
+		glm::ivec2(10, 10),
+		glm::ivec2(10, 10),
+		glm::ivec2(10, 10),
 		glm::ivec2(10, 10),
 		glm::ivec2(10, 10),
 		glm::ivec2(10, 10),
@@ -114,9 +134,9 @@ private:
 public:
 	Chunk();
 
-	std::atomic<bool> LODReady[5];
+	std::atomic<bool> LODReady[8];
 
-	std::atomic<bool> generationDone[5];
+	std::atomic<bool> generationDone[8];
 
 	void allocateMeshData(const int LOD);
 
