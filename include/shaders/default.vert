@@ -32,9 +32,17 @@ void main()
     normal.z = cos(pitch) * sin(yaw);
     normal   = normalize(normal);
 
-    vec3 worldPos = aOffset + (aPos * lodScale);
+    vec3 aPosTemp = aPos;
+
+    //if (gl_VertexID == 2) {
+    //    aPosTemp.y += 10;
+    //}
+
+    vec3 worldPos = aOffset + (aPosTemp * lodScale);
 
     //HeightLevel = worldPos.y;
+
+
 
     if (lodScale > 1.0) {
         vec2 origin = playerPos.xz;

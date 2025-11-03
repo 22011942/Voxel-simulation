@@ -38,18 +38,18 @@ int main()
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
 
-	if (window == NULL) {
+	if (window == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create window: %s\n", SDL_GetError());
 		return 1;
 	}
 
 	SDL_GLContext mainContext = SDL_GL_CreateContext(window);
-	if (mainContext == NULL) {
+	if (mainContext == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "OpenGL context could not be created! SDL Error: %s\n", SDL_GetError());
 		return 1;
 	}
 
-	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))  {
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress)))  {
 		std::cerr << "Failed to initialize GLAD: " << SDL_GetError() << std::endl;
 		return 1;
 	}
@@ -73,7 +73,7 @@ int main()
 
 	// Shader stuff
 	
-	Shader shaderProgram("/run/media/michaelp/New Volume1/Projects/Voxel simulation/include/shaders/default.vert", "/run/media/michaelp/New Volume1/Projects/Voxel simulation/include/shaders/default.frag");
+	Shader shaderProgram("/mnt/workFiles/Projects/Voxel simulation/include/shaders/default.vert", "/mnt/workFiles/Projects/Voxel simulation/include/shaders/default.frag");
 
 	// shader end
 
@@ -87,7 +87,10 @@ int main()
 
 	//Perlin noise;
 
-	Texture texture("/run/media/michaelp/New Volume1/Projects/Voxel simulation/include/Textures/ground.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture texture("/mnt/workFiles/Projects/Voxel simulation/include/Textures/ground.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture grassTexture("/mnt/workFiles/Projects/Voxel simulation/include/Textures/grass.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture stoneTexture("/mnt/workFiles/Projects/Voxel simulation/include/Textures/stone.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+
 
 	Chunk overworld;
 
@@ -192,7 +195,7 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 
 		
-		const bool* keyState = SDL_GetKeyboardState(NULL);
+		const bool* keyState = SDL_GetKeyboardState(nullptr);
 
 		if (keyState[SDL_SCANCODE_W]) {
 			camera.processKeyboard(FORWARD, deltaTime);

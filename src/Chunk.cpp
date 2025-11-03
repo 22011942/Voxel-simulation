@@ -1,7 +1,21 @@
 #include "Chunk.h"
 
-
 ThreadPool chunkPool(5);
+
+const glm::vec3 Chunk::vertexTemplate[6][4] = {
+	//Front face
+	{{-0.5f, -0.5f,  0.5f}, {0.5f, -0.5f,  0.5f}, {0.5f,  0.5f,  0.5f}, {-0.5f,  0.5f,  0.5f}},
+	//Back face
+	{{0.5f, -0.5f, -0.5f}, {-0.5f, -0.5f, -0.5f}, {-0.5f,  0.5f, -0.5f}, {0.5f,  0.5f, -0.5f}},
+	//Top face
+	{{-0.5f,  0.5f,  0.5f}, {0.5f,  0.5f,  0.5f}, {0.5f,  0.5f, -0.5f}, {-0.5f,  0.5f, -0.5f}},
+	//Bottom face
+	{{-0.5f, -0.5f, -0.5f}, {0.5f, -0.5f, -0.5f}, {0.5f, -0.5f,  0.5f}, {-0.5f, -0.5f,  0.5f}},
+	//Right face
+	{{0.5f, -0.5f,  0.5f}, {0.5f, -0.5f, -0.5f}, {0.5f,  0.5f, -0.5f}, {0.5f,  0.5f,  0.5f}},
+	//Left face
+	{{-0.5f, -0.5f, -0.5f}, {-0.5f, -0.5f,  0.5f}, {-0.5f,  0.5f,  0.5f}, {-0.5f,  0.5f, -0.5f}}
+};
 
 
 std::vector<GLfloat> Chunk::vertices = {
@@ -41,6 +55,8 @@ std::vector<GLfloat> Chunk::vertices = {
 	 -0.5f,  0.5f,  0.5f,
 	 -0.5f,  0.5f, -0.5f,
 };
+
+
 
 std::vector<GLuint> Chunk::indices = {
 	0, 1, 3,
@@ -105,6 +121,25 @@ Chunk::Chunk() : chunk_Coord_LOD0{ glm::ivec2(0, 0) }, prev_chunk_Coord_LOD0{ gl
 	}
 		
 }
+
+void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices,  int x, int y, int z, int face) {
+
+	GLuint baseIndex = vertices.size();
+	for (size_t indx = 0; indx < 4; ++indx) {
+		vertices.push_back(vertexTemplate[face][indx] + glm::vec3(x, y, z));
+	}
+
+	indices.push_back(baseIndex);
+	indices.push_back(baseIndex + 1);
+	indices.push_back(baseIndex + 2);
+	indices.push_back(baseIndex);
+	indices.push_back(baseIndex + 2);
+	indices.push_back(baseIndex + 3);
+}
+
+
+
+
 
 void Chunk::generateOffsets(const int xLimit, const int zLimit, const int LOD, std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& chunks, glm::vec2& playerPos, Perlin& noise) {
 	if (chunks.find(glm::ivec2(xLimit / CHUNK_SIZE, zLimit / CHUNK_SIZE)) == chunks.end()) {
@@ -334,7 +369,7 @@ void Chunk::drawChunks(Shader& shaderProgram, const int LOD) {
 			//std::cout << "Data missing on LOD 0  Coord: " << chunk_Coord_LOD0.x << " " << chunk_Coord_LOD0.y << std::endl;
 		}
 		else {
-			chunks_Mesh_LOD0[chunk_Coord_LOD0]->Draw(indices);
+			chunks_Mesh_LOD0[chunk_Coord_LOD0]->instancedDraw(indices);
 		}
 		
 	}
@@ -344,7 +379,7 @@ void Chunk::drawChunks(Shader& shaderProgram, const int LOD) {
 				//std::cout << "Data missing on LOD "<< LOD << "  Coord: " << coord.x << " " << coord.y << std::endl;
 			}
 			else {
-				returnMeshChunks(LOD)[coord]->Draw(indices);
+				returnMeshChunks(LOD)[coord]->instancedDraw(indices);
 			}
 
 		}

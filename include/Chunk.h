@@ -20,10 +20,10 @@ static float baseSinkStrength = 8.0f;
 static float fadePow = 1.0f;
 static float lodScaleDebug = 4.0f;
 
-const int CHUNK_SIZE = 512;
-const int OCTAVES = 8;
-const double PI = std::numbers::pi;
-const bool SINK_CULLING = true;
+constexpr int CHUNK_SIZE = 512;
+constexpr int OCTAVES = 8;
+constexpr float PI = std::numbers::pi;
+constexpr bool SINK_CULLING = true;
 
 struct IVec2Hash {
 	size_t operator()(const glm::ivec2& v) const {
@@ -97,13 +97,15 @@ private:
 	std::unordered_set<glm::ivec2> prev_chunk_Coords_LOD7;
 
 
-
+	static const glm::vec3 vertexTemplate[6][4];
 	static std::vector<GLfloat> vertices;
 	static std::vector<GLuint> indices;
 	static GLushort encodeAngle(float radians);
 	static std::vector<GLushort> pitchYaw;
 
 	void generateOffsets(const int xLimit, const int zLimit, const int LOD, std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& chunks, glm::vec2& playerPos, Perlin& noise);
+
+	void generateVertexs(const int xLimit, const int zLimit, const int LOD, std::unordered_map<glm::ivec2, std::vector<glm::vec3>>& chunks, glm::vec2& playerPos, Perlin& noise);
 
 	void generateSurroundingChunks(const glm::ivec2& playerChunk, int LOD, glm::vec2& playerPos, Perlin& noise);
 
@@ -129,6 +131,8 @@ private:
 	std::unordered_set<glm::ivec2>& returnPrevChunk(const int LOD);
 
 	std::unordered_map<glm::ivec2, std::unique_ptr<Mesh>>& returnMeshChunks(const int LOD);
+
+	void addFace(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices,  int x, int y, int z, int face);
 
 	int returnLODScale(const int LOD);
 public:

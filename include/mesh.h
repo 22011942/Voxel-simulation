@@ -5,9 +5,16 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+
+struct Vertex {
+	glm::vec3 Position;
+	glm::vec3 pitchYaw;
+};
+
 class Mesh {
 public:
 	Mesh(std::vector<GLfloat>& vertices, std::vector<GLuint>& indices, std::vector<GLushort>& pitchYaw, std::vector<glm::vec3> offsets);
+	Mesh(std::vector<GLfloat>& vertices, std::vector<GLuint>& indices, std::vector<GLushort>& pitchYaw);
 
 	Mesh() = default;
 
@@ -19,12 +26,14 @@ public:
 	Mesh(Mesh&& other) noexcept;
 	Mesh& operator=(Mesh&& other) noexcept;
 
+	void instancedDraw(const std::vector<GLuint>& indices);
+
 	void Draw(const std::vector<GLuint>& indices);
 
 	~Mesh();
 
 private:
-	GLuint VBO, VAO, EBO, instanceVBO, pitchYawVBO, instanceCount;
+	GLuint VBO{}, VAO{}, EBO{}, instanceVBO{}, pitchYawVBO{}, instanceCount{};
 
 	void Delete();
 };
