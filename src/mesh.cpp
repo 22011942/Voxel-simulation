@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include <thread>
 
 Mesh::Mesh(std::vector<GLfloat>& vertices, std::vector<GLuint>& indices, std::vector<GLushort>& pitchYaw, std::vector<glm::vec3> offsets) {
 	//For instancing
@@ -42,34 +43,53 @@ Mesh::Mesh(std::vector<GLfloat>& vertices, std::vector<GLuint>& indices, std::ve
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-Mesh::Mesh(std::vector<GLfloat>& vertices, std::vector<GLuint>& indices, std::vector<GLushort>& pitchYaw) {
+void Mesh::validate() const {
+	assert(VAO != 0);
+	assert(VBO != 0);
+	assert(EBO != 0);
+	assert(!indices.empty());
+	assert(!vertices.empty());
+	assert(indices.size()  % 3 == 0);
+}
+
+Mesh::Mesh(const Vertex_Data& data) {
+	indices = data.indices;
+	vertices = data.vertices;
+
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
-	glGenBuffers(1, &pitchYawVBO);
 
 	glBindVertexArray(VAO);
-	//vertex buffer
+
+	// Upload vertices
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-	// index buffer
+	glBufferData(GL_ARRAY_BUFFER, data.vertices.size() * sizeof(Vertex), data.vertices.data(),GL_STATIC_DRAW);
+
+	// Upload indices
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-	// vertex attributes
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,data.indices.size() * sizeof(GLuint), data.indices.data(),GL_STATIC_DRAW);
+
+	// Layout
+	glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
 	glEnableVertexAttribArray(0);
 
-	//Pitch and Yaw offset buffer
-	glBindBuffer(GL_ARRAY_BUFFER, pitchYawVBO);
-	glBufferData(GL_ARRAY_BUFFER, pitchYaw.size() * sizeof(GLushort), pitchYaw.data(), GL_STATIC_DRAW);
-
-	glVertexAttribPointer(1, 2, GL_UNSIGNED_SHORT, GL_TRUE, 2 * sizeof(GLushort), (void*)0);
+	glVertexAttribPointer(1, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, pitch));
 	glEnableVertexAttribArray(1);
-	glVertexAttribDivisor(1, 0);
+
+	glVertexAttribPointer(2, 3, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, localPos));
+	glEnableVertexAttribArray(2);
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	GLenum err = glGetError();
+	if (err != GL_NO_ERROR) {
+		std::cout << "GL ERROR during Mesh upload: 0x"
+				  << std::hex << err << std::dec << std::endl;
+	}
 }
 
 void Mesh::instancedDraw(const std::vector<GLuint>& indices) {
@@ -78,10 +98,12 @@ void Mesh::instancedDraw(const std::vector<GLuint>& indices) {
 	glBindVertexArray(0);
 }
 
-void Mesh::Draw(const std::vector<GLuint>& indices) {
+void Mesh::Draw() {
+	validate();
 	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
+
+	//glBindVertexArray(0);
 }
 
 void Mesh::Delete() {

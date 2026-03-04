@@ -14,10 +14,12 @@ constexpr GLsizei BYTES_PER_VERTEX = 6;
 void drawGUI(Camera& camera, Perlin& perlin, glm::vec3& lightPos, glm::vec3& lightCol);
 
 int main()
-{   
+{
 	SDL_Window* window;
 	bool done = false;
 	bool mouse = true;
+
+
 
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not initialise SDL3: %s\n", SDL_GetError());
@@ -69,11 +71,15 @@ int main()
 
 	SDL_GL_SetSwapInterval(1); 
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
+	//glCullFace(GL_BACK);
+	//glDisable(GL_CULL_FACE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 
 	// Shader stuff
 	
-	Shader shaderProgram("/mnt/workFiles/Projects/Voxel simulation/include/shaders/default.vert", "/mnt/workFiles/Projects/Voxel simulation/include/shaders/default.frag");
+	Shader shaderProgram("/run/media/michaelp/WorkFiles/Projects/Voxel simulation/include/shaders/default.vert", "/run/media/michaelp/WorkFiles/Projects/Voxel simulation/include/shaders/default.frag");
 
 	// shader end
 
@@ -87,15 +93,19 @@ int main()
 
 	//Perlin noise;
 
-	Texture texture("/mnt/workFiles/Projects/Voxel simulation/include/Textures/ground.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
-	Texture grassTexture("/mnt/workFiles/Projects/Voxel simulation/include/Textures/grass.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
-	Texture stoneTexture("/mnt/workFiles/Projects/Voxel simulation/include/Textures/stone.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture texture("/run/media/michaelp/WorkFiles/Projects/Voxel simulation/include/Textures/ground.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture grassTexture("/run/media/michaelp/WorkFiles/Projects/Voxel simulation/include/Textures/grass.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
+	Texture stoneTexture("/run/media/michaelp/WorkFiles/Projects/Voxel simulation/include/Textures/stone.jpg", GL_TEXTURE_2D, GL_RGB, GL_UNSIGNED_BYTE);
 
 
-	Chunk overworld;
+	//Chunk overworld;
+
+	ChunkRework overworld2;
 
 	glm::vec3 lightPos = glm::vec3(0, 150, 10);
 	glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	bool start = false;
 
 	double number = 0;
 
@@ -142,10 +152,10 @@ int main()
 		shaderProgram.setUniform("lightPos", lightPos);
 		shaderProgram.setUniform("lightColor", lightColor);
 
-		shaderProgram.setUniform("startDistMultiplier", startDistMultiplier);
-		shaderProgram.setUniform("endDistAdd", endDistAdd);
-		shaderProgram.setUniform("baseSinkStrength", baseSinkStrength);
-		shaderProgram.setUniform("fadePow", fadePow);
+		//shaderProgram.setUniform("startDistMultiplier", startDistMultiplier);
+		//shaderProgram.setUniform("endDistAdd", endDistAdd);
+		//shaderProgram.setUniform("baseSinkStrength", baseSinkStrength);
+		//shaderProgram.setUniform("fadePow", fadePow);
 
 
 		texture.bindTexture();
@@ -154,30 +164,43 @@ int main()
 		shaderProgram.activate();
 
 
-		for (int lod = 0; lod < 8; lod++) {
-			overworld.generateChunks(camera.Position, perlin, lod);
+		for (int lod = 0; lod < 3; lod++) {
 
+			if (!start) {
 
-			if (overworld.generationDone[lod]) {
-
-				//overworld.LODReady[lod].store(false);
-				overworld.allocateMeshData(lod);
-
-				overworld.clearTempChunk(lod);
-				overworld.prevChunksAssign(lod);
-
-				//overworld.LODReady[lod].store(true);
-				overworld.generationDone[lod].store(false); // reset for next time
+				overworld2.startUp(camera.Position, 0);
+				overworld2.startUp(camera.Position, 1);
+				overworld2.startUp(camera.Position, 2);
+				//overworld2.startUp(camera.Position, 3);
+				//overworld2.startUp(camera.Position, 4);
+				start = true;
 			}
 
+			overworld2.mainRoutine(lod);
+
+
+			//overworld2.generateChunks(camera.Position, lod);
+
+			if (overworld2.generationDone[lod]) {
+
+				//overworld.LODReady[lod].store(false);
+				overworld2.allocateMeshData(lod, camera.Position);
+				overworld2.LODReady[lod] = true;
+
+				//		overworld.clearTempChunk(lod);
+				//		overworld.prevChunksAssign(lod);
+
+				//overworld.LODReady[lod].store(true);
+				overworld2.generationDone[lod].store(false);
+			}
 
 		}
 
-		for (int lod = 0; lod < 8; lod++) {
-			//if (overworld.LODReady[lod]) {
-				//std::cout << " Drawing lod chunk: " << lod << std::endl;
-			overworld.drawChunks(shaderProgram, lod);
-			//}
+
+		for (int lod = 0; lod < 3; lod++) {
+			if (overworld2.LODReady[lod]) {
+				overworld2.drawChunks(shaderProgram, lod);
+			}
 		}
 
 
@@ -255,11 +278,11 @@ void drawGUI(Camera& camera, Perlin& perlin, glm::vec3& lightPos, glm::vec3& lig
 	ImGui::End();
 
 	//Sinking 
-	ImGui::Begin("Sinkng");
-	ImGui::SliderFloat("StartDist Mult", &startDistMultiplier, 0.0f, 2.0f);
-	ImGui::SliderFloat("EndDist Add", &endDistAdd, 0.0f, 1000.0f);
-	ImGui::SliderFloat("Base Sink", &baseSinkStrength, 0.0f, 20.0f);
-	ImGui::SliderFloat("Fade Power", &fadePow, 0.1f, 5.0f);
+	//ImGui::Begin("Sinkng");
+	//ImGui::SliderFloat("StartDist Mult", &startDistMultiplier, 0.0f, 2.0f);
+	//ImGui::SliderFloat("EndDist Add", &endDistAdd, 0.0f, 1000.0f);
+	//ImGui::SliderFloat("Base Sink", &baseSinkStrength, 0.0f, 20.0f);
+	//ImGui::SliderFloat("Fade Power", &fadePow, 0.1f, 5.0f);
 
-	ImGui::End();
+	//ImGui::End();
 }

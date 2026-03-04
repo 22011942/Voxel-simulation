@@ -11,6 +11,7 @@ endif()
 
 project ("Voxel simulation")
 
+set(SDL_IBUS OFF CACHE BOOL "" FORCE)
 
 # Include sub-projects.
 add_subdirectory ("src")

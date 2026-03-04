@@ -1,7 +1,8 @@
 #version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aPitchYaw;
-layout (location = 2) in vec3 aOffset;
+layout (location = 2) in vec3 aLocalPos;
+//layout (location = 2) in vec3 aOffset;
 
 out vec3 FragPos;
 out vec3 ourNormal; 
@@ -14,6 +15,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 playerPos;
 uniform int lodScale;
+uniform vec3 chunkWorldPos;
 
 uniform float startDistMultiplier;
 uniform float endDistAdd;
@@ -21,10 +23,12 @@ uniform float baseSinkStrength;
 uniform float fadePow;
 
 
+
+
 void main()
 {
-	float pitch = aPitchYaw.x * 2.0 * 3.14159265 - 3.14159265; 
-	float yaw   = aPitchYaw.y * 2.0 * 3.14159265 - 3.14159265;  
+	float pitch = aPitchYaw.x * 2.0 * 3.14159265 - 3.14159265;
+	float yaw   = aPitchYaw.y * 2.0 * 3.14159265 - 3.14159265;
 
 	vec3 normal;
     normal.x = cos(pitch) * cos(yaw);
@@ -32,53 +36,38 @@ void main()
     normal.z = cos(pitch) * sin(yaw);
     normal   = normalize(normal);
 
+    vec3 position = vec3(0.0);
+
+    position.x = floor(gl_VertexID / 12.0);
+    position.z = mod(gl_VertexID, 12.0);
+    position.y = aPos.y;
+
     vec3 aPosTemp = aPos;
 
     //if (gl_VertexID == 2) {
     //    aPosTemp.y += 10;
     //}
 
-    vec3 worldPos = aOffset + (aPosTemp * lodScale);
+    vec3 chunkOffset = chunkWorldPos * 16.0;
 
-    //HeightLevel = worldPos.y;
+    vec3 worldPos = chunkOffset + aLocalPos + (aPosTemp * lodScale);
 
+    //vec3 tempCombinedPos = aPos + aLocalPos + chunkOffset;
 
-
-    if (lodScale > 1.0) {
-        vec2 origin = playerPos.xz;
-        vec2 blockPos = worldPos.xz;
-        float dist = length(blockPos - origin);
-
-        // Adjust this falloff distance to match your chunk radius
-        float startDist = startDistMultiplier * lodScale; 
-        float endDist   = startDist + endDistAdd * lodScale;
-
-        // Smooth falloff factor (1 near boundary, 0 when far)
-        float t = clamp((dist - startDist) / max(1.0, endDist - startDist), 0.0, 1.0);
-        float fade = pow(1.0 - smoothstep(0.0, 1.0, t), fadePow);
-
-        // sinkStrength scales more naturally (linear-ish, not exponential)
-        
-        float sinkStrength = baseSinkStrength * log2(lodScale + 1.0);
-
-        worldPos.y -= fade * sinkStrength;
-    }
-
-        
 	gl_Position = projection * view * model * vec4(worldPos, 1.0);
     ourNormal = mat3(transpose(inverse(model))) * normal;
-    FragPos = vec3(model * vec4(aPos, 1.0)); 
+    FragPos = vec3(model * vec4(worldPos, 1.0));
 
 	float epsilon = 0.01;
 
     if (abs(normal.x) > 1.0 - epsilon) {
-        TexCoord = aPos.yz + 0.5;
+        TexCoord = worldPos.yz + 0.5;
 
     } else if (abs(normal.y) > 1.0 - epsilon) {
-        TexCoord = aPos.xz + 0.5;
+        TexCoord = worldPos.xz + 0.5;
 
     } else {
-        TexCoord = aPos.xy + 0.5;
+        TexCoord = worldPos.xy + 0.5;
     }
 
 	//TexCoord = aTexCoord;

@@ -1,6 +1,6 @@
 #include "Chunk.h"
 
-ThreadPool chunkPool(5);
+//ThreadPool chunkPool(5);
 
 const glm::vec3 Chunk::vertexTemplate[6][4] = {
 	//Front face
@@ -205,10 +205,10 @@ void Chunk::generateChunks(const glm::vec3& playerPos, Perlin& noise, const int 
 
 		generationDone[LOD] = false;
 
-		auto future = chunkPool.enqueue([=, this]() mutable {
+		//auto future = chunkPool.enqueue([=, this]() mutable {
 			generateSurroundingChunks(playerChunk, LOD, playerPosition, noise);
 			generationDone[LOD].store(true); // mark as finished
-		});
+		//});
 
 		//allocateMeshData(LOD);
 
